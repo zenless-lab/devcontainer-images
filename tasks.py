@@ -2,7 +2,7 @@ import pathlib
 
 from invoke import task
 
-from build_utils import generate_test_dockerfile, convert_str_to_dict
+from utils import generate_test_dockerfile, convert_str_to_dict
 
 
 @task
