@@ -44,7 +44,7 @@ commands:
             --tag << parameters.image-name >>:<< parameters.tag >> \
             $(if [ -n "<< parameters.target >>" ]; then echo "--target << parameters.target >>"; fi) \
             $(for arg in << parameters.build-args >>; do echo "--build-arg $arg"; done) \
-            --output << parameters.output-image >> \
+            --output << parameters.output >> \
             ./images/<< parameters.image-name >>/src
 
 jobs:
