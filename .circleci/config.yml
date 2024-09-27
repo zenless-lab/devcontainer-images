@@ -94,7 +94,6 @@ workflows:
               os:
                 - ubuntu22.04
                 - ubuntu20.04
-                - ubuntu18.04
     # - deploy:
     #     requires:
     #       - test-python
