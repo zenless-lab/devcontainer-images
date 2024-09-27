@@ -13,7 +13,10 @@ def build(c, image_name, tag='latest'):
 
 
 @task(iterable=['scripts', 'env_var'])
-def test(c, image_name, tag='latest', script=['test.sh'], env_var=None):
+def test(c, image_name, tag='latest', script=None, env_var=None):
+    script = script or ['test.sh']
+    env_var = env_var or []
+
     image_root = pathlib.Path(f"images/{image_name}")
     image_test_path = image_root / "tests"
 
