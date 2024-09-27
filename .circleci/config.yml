@@ -59,7 +59,8 @@ jobs:
           tag: "latest"
           platform: "linux/amd64"
           output: "type=cacheonly"
-          output-image: "type=image,push=false"
+          use-remote-cache: true
+
   deploy:
     # This is an example deploy job, not actually used by the workflow
     docker:
