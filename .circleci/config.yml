@@ -40,10 +40,12 @@ commands:
       - setup_remote_docker:
           docker_layer_caching: << parameters.use-remote-cache >>
 
-      - run:
-          name: Login to Docker Hub
-          when: << parameters.login >>
-          command: echo "$DOCKER_PASS" | docker login --username $DOCKER_USER --password-stdin
+      - when:
+          condition: << parameters.login >>
+          steps:
+            - run:
+                name: Set up Docker credentials
+                command: echo "$DOCKER_CONFIG" > ~/.docker/config.json
 
       - run:
           name: Build Docker image
