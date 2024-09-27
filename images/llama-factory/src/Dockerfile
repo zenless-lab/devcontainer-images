@@ -1,6 +1,5 @@
 ARG BASE_IMAGE=nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
 
-### Install Python to the base image (Stage 1) ###
 FROM ${BASE_IMAGE}
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -58,6 +57,7 @@ WORKDIR /workspace
 RUN --mount=type=cache,target=/var/cache/apt \
     --mount=type=cache,target=/var/lib/apt/lists \
     --mount=type=cache,target=${PYENV_ROOT}/cache \
+    --mount=type=cache,target=${HOME}/.cache/pip \
     pip install --upgrade --no-cache-dir \
         pip \
         setuptools \

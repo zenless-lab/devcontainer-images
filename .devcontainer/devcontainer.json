@@ -14,8 +14,7 @@
 			"version": "3.11"
 		}
 	},
-	"postCreateCommand": "pipx install uv && uvx pre-commit install"
-
+	"postCreateCommand": "pipx install uv && uvx pre-commit install && uv sync"
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
