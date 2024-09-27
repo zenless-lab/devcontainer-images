@@ -1,21 +1,65 @@
-# This config was automatically generated from your source code
-# Stacks detected: deps:python:.
 version: 2.1
-orbs:
-  python: circleci/python@2
+
+commands:
+  build-image:
+    description: "Builds a Docker image"
+    parameters:
+      image-name:
+        description: "The name of the Docker image to build"
+        type: string
+      tag:
+        description: "The tag of the Docker image to build"
+        type: string
+        default: "latest"
+      target:
+        description: "The stage of the Docker image to build"
+        type: string
+        default: ""
+      build-args:
+        description: "The build arguments to pass to the Docker image"
+        type: string
+        default: ""
+      platform:
+        description: "The platform to build the Docker image for"
+        type: string
+        default: "linux/amd64,linux/arm64"
+      output:
+        description: "The output of the Docker image build"
+        type: string
+        default: "type=image,push=false"
+      use-remote-cache:
+        description: "Use the remote Docker layer cache"
+        type: boolean
+        default: true
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: << parameters.use-remote-cache >>
+
+      - run: echo "$DOCKER_PASS" | docker login --username $DOCKER_USER --password-stdin
+
+      - run: |
+          docker buildx build \
+            --platform << parameters.platform >> \
+            --tag << parameters.image-name >>:<< parameters.tag >> \
+            $(if [ -n "<< parameters.target >>" ]; then echo "--target << parameters.target >>"; fi) \
+            $(for arg in << parameters.build-args >>; do echo "--build-arg $arg"; done) \
+            --output << parameters.output-image >> \
+            ./images/<< parameters.image-name >>/src
+
 jobs:
-  test-python:
+  test-image-build:
     # Install dependencies and run tests
     docker:
       - image: cimg/python:3.11-node
     steps:
       - checkout
-      - python/install-packages
-      - run:
-          name: Run tests
-          command: pytest --junitxml=junit.xml || ((($? == 5)) && echo 'Did not find any tests to run.')
-      - store_test_results:
-          path: junit.xml
+      - build-image:
+          image-name: "dev-cuda"
+          tag: "latest"
+          platform: "linux/amd64"
+          output: "type=cacheonly"
+          output-image: "type=image,push=false"
   deploy:
     # This is an example deploy job, not actually used by the workflow
     docker:
@@ -26,9 +70,9 @@ jobs:
           name: deploy
           command: '#e.g. ./deploy.sh'
 workflows:
-  build-and-test:
+  test:
     jobs:
-      - test-python
+      - test-image-build
     # - deploy:
     #     requires:
     #       - test-python
