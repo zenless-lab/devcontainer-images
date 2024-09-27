@@ -81,7 +81,7 @@ jobs:
       - run:
           name: "Run tests"
           command: |
-            pipx install uv
+            curl -LsSf https://astral.sh/uv/install.sh | sh
             uv sync
             uv run inv test $image-name --tag "<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
 
