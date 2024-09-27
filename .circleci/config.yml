@@ -69,15 +69,12 @@ jobs:
       os:
         type: string
         default: "ubuntu22.04"
-    environment:
-      image-name: "llama-factory"
-      platform: "linux/amd64"
     steps:
       - checkout
       - build-image:
-          image-name: $image-name
+          image-name: "llama-factory"
           tag: "<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
-          platform: $platform
+          platform: "linux/amd64"
           build-args: "BASE_IMAGE=nvidia/cuda:<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
           output: "type=cacheonly"
           use-remote-cache: false
