@@ -31,28 +31,37 @@ commands:
         description: "Use the remote Docker layer cache"
         type: boolean
         default: true
+      login:
+        description: "Login to Docker Hub"
+        type: boolean
+        default: false
     steps:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: << parameters.use-remote-cache >>
 
-      - run: echo "$DOCKER_PASS" | docker login --username $DOCKER_USER --password-stdin
+      - run:
+          name: Login to Docker Hub
+          when: << parameters.login >>
+          command: echo "$DOCKER_PASS" | docker login --username $DOCKER_USER --password-stdin
 
-      - run: |
-          docker buildx build \
-            --platform << parameters.platform >> \
-            --tag << parameters.image-name >>:<< parameters.tag >> \
-            $(if [ -n "<< parameters.target >>" ]; then echo "--target << parameters.target >>"; fi) \
-            $(for arg in << parameters.build-args >>; do echo "--build-arg $arg"; done) \
-            --output << parameters.output >> \
-            ./images/<< parameters.image-name >>/src
+      - run:
+          name: Build Docker image
+          command: |
+            docker buildx build \
+              --platform << parameters.platform >> \
+              --tag << parameters.image-name >>:<< parameters.tag >> \
+              $(if [ -n "<< parameters.target >>" ]; then echo "--target << parameters.target >>"; fi) \
+              $(for arg in << parameters.build-args >>; do echo "--build-arg $arg"; done) \
+              --output << parameters.output >> \
+              ./images/<< parameters.image-name >>/src
 
 jobs:
   test-image-build:
     # Install dependencies and run tests
     docker:
-      image: cimg/base:2024.09
-      docker_layer_caching: true
+      - image: cimg/base:2024.09
+        docker_layer_caching: true
     steps:
       - checkout
       - build-image:
