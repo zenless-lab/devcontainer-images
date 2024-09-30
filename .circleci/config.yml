@@ -110,7 +110,7 @@ jobs:
           tag: "<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
           platform: "linux/amd64"
           build-args: "BASE_IMAGE=nvidia/cuda:<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
-          output: "type=docker,dest=tmp.tar"
+          output: "type=tar,dest=tmp.tar"
           use-remote-cache: false
       - run-test:
           image-name: "cuda-python"
