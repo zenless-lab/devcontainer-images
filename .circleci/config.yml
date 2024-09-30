@@ -111,6 +111,9 @@ jobs:
           platform: "linux/amd64"
           build-args: "BASE_IMAGE=nvidia/cuda:<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
           use-remote-cache: false
+      - run:
+          name: List Docker images
+          command: docker image ls
       - run-test:
           image-name: "dev-cuda"
           tag: "<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
