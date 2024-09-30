@@ -103,7 +103,7 @@ jobs:
           tag: "<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
           platform: "linux/amd64"
           build-args: "BASE_IMAGE=nvidia/cuda:<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
-          output: "type=cacheonly"
+          output: "type=image,push=false"
           use-remote-cache: false
       - run-test:
           image-name: "llama-factory"
