@@ -37,7 +37,7 @@ commands:
           steps:
             - run:
                 name: Set up Docker credentials
-                command: echo "$DOCKER_CONFIG" > ~/.docker/config.json
+                command: echo "$DOCKER_TOKEN" | docker login --username $DOCKER_USER --password-stdin
       - run:
           name: Build Docker image
           command: |
