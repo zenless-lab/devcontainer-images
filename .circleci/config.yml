@@ -82,10 +82,8 @@ commands:
       - run:
           name: Run tests
           command: |
-            pip install invoke
-            if [ -n "<< parameters.load-from >>" ]; then
-              docker load -i << parameters.load-from >>
-            fi
+            inv build << parameters.image-name >> \
+              --tag << parameters.tag >>
             inv test << parameters.image-name >>
               --tag << parameters.tag >>
               $(for script in << parameters.scripts >>; do echo "--script $script"; done) \
@@ -105,13 +103,6 @@ jobs:
         default: "ubuntu22.04"
     steps:
       - checkout
-      - build-image:
-          image-name: "dev-cuda"
-          tag: "<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
-          platform: "linux/amd64"
-          build-args: "BASE_IMAGE=nvidia/cuda:<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
-          output: "type=tar,dest=tmp.tar"
-          use-remote-cache: true
       - run-test:
           image-name: "dev-cuda"
           tag: "<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
