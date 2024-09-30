@@ -111,13 +111,10 @@ jobs:
           platform: "linux/amd64"
           build-args: "BASE_IMAGE=nvidia/cuda:<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
           output: "type=tar,dest=tmp.tar"
-          use-remote-cache: false
+          use-remote-cache: true
       - run-test:
-          image-name: "dev-cuda"
+          image-name: "tmp.tar"
           tag: "<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
-          scripts: "test.sh test.sh"
-          env-vars: "CUDA_VERSION=<< parameters.cuda_version >>"
-          load-from: "tmp.tar"
 
 workflows:
   test:
