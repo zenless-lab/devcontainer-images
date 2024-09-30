@@ -1,34 +1,85 @@
-# This config was automatically generated from your source code
-# Stacks detected: deps:python:.
 version: 2.1
-orbs:
-  python: circleci/python@2
+
+commands:
+  build-image:
+    description: "Builds a Docker image"
+    parameters:
+      image-name:
+        description: "The name of the Docker image to build"
+        type: string
+      tag:
+        description: "The tag of the Docker image to build"
+        type: string
+        default: "latest"
+      target:
+        description: "The stage of the Docker image to build"
+        type: string
+        default: ""
+      build-args:
+        description: "The build arguments to pass to the Docker image"
+        type: string
+        default: ""
+      platform:
+        description: "The platform to build the Docker image for"
+        type: string
+        default: "linux/amd64,linux/arm64"
+      output:
+        description: "The output of the Docker image build"
+        type: string
+        default: ""
+      login:
+        description: "Login to Docker Hub"
+        type: boolean
+        default: false
+    steps:
+      - when:
+          condition: << parameters.login >>
+          steps:
+            - run:
+                name: Set up Docker credentials
+                command: echo "$DOCKER_TOKEN" | docker login --username $DOCKER_USER --password-stdin
+      - run:
+          name: Build Docker image
+          command: |
+            docker buildx build \
+              --platform << parameters.platform >> \
+              --tag << parameters.image-name >>:<< parameters.tag >> \
+              $(if [ -n "<< parameters.target >>" ]; then echo "--target << parameters.target >>"; fi) \
+              $(for arg in << parameters.build-args >>; do echo "--build-arg $arg"; done) \
+              $(if [ -n "<< parameters.output >>" ]; then echo "--output type=local,dest=<< parameters.output >>"; fi) \
+              ./images/<< parameters.image-name >>/src
+
 jobs:
-  test-python:
+  test-dev-cuda-build:
     # Install dependencies and run tests
     docker:
-      - image: cimg/python:3.11-node
+      - image: cimg/python:3.11
+    parameters:
+      cuda_version:
+        type: string
+        default: "12.4.1"
+      os:
+        type: string
+        default: "ubuntu22.04"
     steps:
       - checkout
-      - python/install-packages
-      - run:
-          name: Run tests
-          command: pytest --junitxml=junit.xml || ((($? == 5)) && echo 'Did not find any tests to run.')
-      - store_test_results:
-          path: junit.xml
-  deploy:
-    # This is an example deploy job, not actually used by the workflow
-    docker:
-      - image: cimg/base:stable
-    steps:
-      # Replace this with steps to deploy to users
-      - run:
-          name: deploy
-          command: '#e.g. ./deploy.sh'
+      - setup_remote_docker:
+          docker_layer_caching: false
+      - build-image:
+          image-name: "dev-cuda"
+          tag: "<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
+          platform: "linux/amd64"
+          build-args: "BASE_IMAGE=nvidia/cuda:<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
+
 workflows:
-  build-and-test:
+  test:
     jobs:
-      - test-python
+      - test-dev-cuda-build:
+          matrix:
+            parameters:
+              os:
+                - ubuntu22.04
+                - ubuntu20.04
     # - deploy:
     #     requires:
     #       - test-python

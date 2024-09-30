@@ -24,8 +24,6 @@ def test(c, image_name, tag='latest', script=None, env_var=None):
 
     c.run(
         'docker buildx build '
-        '--no-cache '
-        f'--build-arg BASE_IMAGE={image_name}:{tag} '
         '--output type=cacheonly '
         f'--build-context test_root={image_test_path.absolute()} '
         f'- <<EOF\n{generate_test_dockerfile(image_name, tag, env_vars=env_vars_dict, scripts=script)}\nEOF'
