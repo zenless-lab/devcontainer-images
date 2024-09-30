@@ -79,9 +79,10 @@ commands:
           name: Run tests
           command: |
             pip install invoke
-            inv test $image-name --tag $tag \
-              $(for script in $scripts; do echo "--script $script"; done) \
-              $(for env_var in $env-vars; do echo "--env-var $env_var"; done)
+            inv test << parameters.image-name >>
+              --tag << parameters.tag >>
+              $(for script in << parameters.scripts >>; do echo "--script $script"; done) \
+              $(for env_var in << parameters.env-vars >>; do echo "--env-var $env_var"; done)
 
 jobs:
   test-image-build:
