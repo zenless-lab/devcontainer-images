@@ -94,8 +94,6 @@ jobs:
         default: "ubuntu22.04"
     steps:
       - checkout
-      - setup_remote_docker:
-          docker_layer_caching: false
       - build-image:
           image-name: "dev-cuda"
           tag: "<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
