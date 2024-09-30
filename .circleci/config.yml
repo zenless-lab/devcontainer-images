@@ -113,8 +113,9 @@ jobs:
           output: "type=tar,dest=tmp.tar"
           use-remote-cache: true
       - run-test:
-          image-name: "tmp.tar"
+          image-name: "dev-cuda"
           tag: "<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
+          load-from: "tmp.tar"
 
 workflows:
   test:
