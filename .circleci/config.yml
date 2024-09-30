@@ -48,40 +48,9 @@ commands:
               $(for arg in << parameters.build-args >>; do echo "--build-arg $arg"; done) \
               $(if [ -n "<< parameters.output >>" ]; then echo "--output type=local,dest=<< parameters.output >>"; fi) \
               ./images/<< parameters.image-name >>/src
-  run-test:
-    description: "Run tests"
-    parameters:
-      image-name:
-        description: "The name of the Docker image to test"
-        type: string
-      tag:
-        description: "The tag of the Docker image to test"
-        type: string
-        default: "latest"
-      scripts:
-        description: "The script to run in the Docker image"
-        type: string
-        default: "test.sh"
-      env-vars:
-        description: "The environment variables to set in the Docker image"
-        type: string
-        default: ""
-      use-remote-cache:
-        description: "Use the remote Docker layer cache"
-        type: boolean
-        default: true
-    steps:
-      - run:
-          name: Run tests
-          command: |
-            pip install invoke
-            inv test << parameters.image-name >>
-              --tag << parameters.tag >>
-              $(for script in << parameters.scripts >>; do echo "--script $script"; done) \
-              $(for env_var in << parameters.env-vars >>; do echo "--env-var $env_var"; done)
 
 jobs:
-  test-image-build:
+  test-dev-cuda-build:
     # Install dependencies and run tests
     docker:
       - image: cimg/python:3.11
@@ -94,19 +63,18 @@ jobs:
         default: "ubuntu22.04"
     steps:
       - checkout
+      - setup_remote_docker:
+          docker_layer_caching: false
       - build-image:
           image-name: "dev-cuda"
           tag: "<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
           platform: "linux/amd64"
           build-args: "BASE_IMAGE=nvidia/cuda:<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
-      - run-test:
-          image-name: "dev-cuda"
-          tag: "<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
 
 workflows:
   test:
     jobs:
-      - test-image-build:
+      - test-dev-cuda-build:
           matrix:
             parameters:
               os:
