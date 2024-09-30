@@ -56,12 +56,38 @@ commands:
               $(for arg in << parameters.build-args >>; do echo "--build-arg $arg"; done) \
               --output << parameters.output >> \
               ./images/<< parameters.image-name >>/src
+  run-test:
+    description: "Run tests"
+    parameters:
+      image-name:
+        description: "The name of the Docker image to test"
+        type: string
+      tag:
+        description: "The tag of the Docker image to test"
+        type: string
+        default: "latest"
+      scripts:
+        description: "The script to run in the Docker image"
+        type: string
+        default: "test.sh"
+      env-vars:
+        description: "The environment variables to set in the Docker image"
+        type: string
+        default: ""
+    steps:
+      - run:
+          name: Run tests
+          command: |
+            pip install invoke
+            inv test $image-name --tag $tag \
+              $(for script in $scripts; do echo "--script $script"; done) \
+              $(for env_var in $env-vars; do echo "--env-var $env_var"; done)
 
 jobs:
   test-image-build:
     # Install dependencies and run tests
     docker:
-      - image: cimg/base:2024.09
+      - image: cimg/python:3.11
     parameters:
       cuda_version:
         type: string
@@ -78,11 +104,11 @@ jobs:
           build-args: "BASE_IMAGE=nvidia/cuda:<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
           output: "type=cacheonly"
           use-remote-cache: false
-      - run:
-          name: "Run tests"
-          command: |
-            pip install invoke
-            inv test $image-name --tag "<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
+      - run-test:
+          image-name: "llama-factory"
+          tag: "<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
+          scripts: "test.sh test.sh"
+          env-vars: "CUDA_VERSION=<< parameters.cuda_version >>"
 
 workflows:
   test:
