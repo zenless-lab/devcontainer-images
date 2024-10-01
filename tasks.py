@@ -1,30 +1,30 @@
-import pathlib
-
 from invoke import task
 
-from utils import generate_test_dockerfile, convert_str_to_dict
+from utils import get_image_src_path, get_image_test_path, get_test_image_path
+
+NAME_SPACE = "ryanminato"
 
 
 @task
-def build(c, image_name, tag='latest'):
-    source_path = f"images/{image_name}/src"
-    c.run(f'docker buildx build -t {image_name}:{tag} {source_path}')
+def build(c, image_name, force_name=None, tag="latest", namespace=NAME_SPACE):
+    source_path = get_image_src_path(image_name)
+    image_tag = force_name or f"{namespace}/{image_name}:{tag}"
+
+    c.run(f"docker buildx build -t {image_tag} {source_path}")
 
 
+@task
+def test(c, image_name,  force_name=None, tag="latest", namespace=NAME_SPACE, verbose=False):
+    image_test_path = get_image_test_path(image_name)
+    test_image_path = get_test_image_path()
 
-@task(iterable=['scripts', 'env_var'])
-def test(c, image_name, tag='latest', script=None, env_var=None):
-    script = script or ['test.sh']
-    env_var = env_var or []
-
-    image_root = pathlib.Path(f"images/{image_name}")
-    image_test_path = image_root / "tests"
-
-    env_vars_dict = convert_str_to_dict(env_var) if env_var else {}
+    image_tag = force_name or f"{namespace}/{image_name}:{tag}"
 
     c.run(
-        'docker buildx build '
-        '--output type=cacheonly '
-        f'--build-context test_root={image_test_path.absolute()} '
-        f'- <<EOF\n{generate_test_dockerfile(image_name, tag, env_vars=env_vars_dict, scripts=script)}\nEOF'
+        "docker buildx build "
+        "--output type=cacheonly "
+        f"--build-arg IMAGE={image_tag} "
+        f"--build-arg VERBOSE={1 if verbose else 0} "
+        f"--build-context test_root={image_test_path.absolute()} "
+        f"{test_image_path}"
         )
