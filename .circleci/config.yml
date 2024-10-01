@@ -70,7 +70,7 @@ jobs:
           tag: "<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
           platform: "linux/amd64"
           build-args: "BASE_IMAGE=nvidia/cuda:<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
-      - test-image:
+      - run:
           name: "Test dev-cuda image"
           command: |
             docker buildx build \
