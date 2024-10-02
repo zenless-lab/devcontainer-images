@@ -1,57 +1,51 @@
 version: 2.1
 
+orbs:
+  docker: circleci/docker@2.7.1
+
 commands:
-  build-image:
-    description: "Builds a Docker image"
+  build-and-test:
+    description: "Builds and tests a Docker image"
     parameters:
+      name-space:
+        description: "The namespace of the Docker image to build"
+        type: string
       image-name:
         description: "The name of the Docker image to build"
         type: string
-      tag:
-        description: "The tag of the Docker image to build"
-        type: string
-        default: "latest"
-      target:
-        description: "The stage of the Docker image to build"
-        type: string
-        default: ""
-      build-args:
-        description: "The build arguments to pass to the Docker image"
-        type: string
-        default: ""
-      platform:
-        description: "The platform to build the Docker image for"
-        type: string
-        default: "linux/amd64,linux/arm64"
-      output:
-        description: "The output of the Docker image build"
-        type: string
-        default: ""
-      login:
-        description: "Login to Docker Hub"
+      use-buildkit:
+        description: "Whether to use BuildKit to build the Docker image"
         type: boolean
-        default: false
+        default: true
+      extra_build_args:
+        description: "The extra build arguments to pass to the Docker image"
+        type: string
+        default: ""
+      extra_test_args:
+        description: "The extra test arguments to pass to the Docker image"
+        type: string
+        default: ""
     steps:
-      - when:
-          condition: << parameters.login >>
-          steps:
-            - run:
-                name: Set up Docker credentials
-                command: echo "$DOCKER_TOKEN" | docker login --username $DOCKER_USER --password-stdin
-      - run:
-          name: Build Docker image
-          command: |
-            docker buildx build \
-              --platform << parameters.platform >> \
-              --tag << parameters.image-name >>:<< parameters.tag >> \
-              $(if [ -n "<< parameters.target >>" ]; then echo "--target << parameters.target >>"; fi) \
-              $(for arg in << parameters.build-args >>; do echo "--build-arg $arg"; done) \
-              $(if [ -n "<< parameters.output >>" ]; then echo "--output type=local,dest=<< parameters.output >>"; fi) \
-              ./images/<< parameters.image-name >>/src
+      - docker/build:
+          step-name: "Build image"
+          image: << parameters.name-space >>/<< parameters.image-name >>
+          path: images/<< parameters.image-name >>/src
+          use-buildkit: << parameters.use-buildkit >>
+          tag: cache-$CIRCLE_SHA1
+          extra_build_args: << parameters.extra_build_args >>
+      - docker/build:
+          step-name: "Build test image"
+          image: test-<< parameters.image-name >>
+          path: ./utils/test
+          use-buildkit: << parameters.use-buildkit >>
+          extra_build_args: |
+            --output=type=cacheonly
+            --build-arg=IMAGE=<< parameters.name-space >>/<< parameters.image-name >>:cache-$CIRCLE_SHA1
+            --build-context=test_root=images/<< parameters.image-name >>/tests
+            << parameters.extra_test_args >>
 
 jobs:
-  test-dev-cuda-build:
-    # Install dependencies and run tests
+  test-dev-cuda:
     docker:
       - image: cimg/python:3.11
     parameters:
@@ -62,28 +56,22 @@ jobs:
         type: string
         default: "ubuntu22.04"
     steps:
-      - checkout
       - setup_remote_docker:
           docker_layer_caching: false
-      - build-image:
-          image-name: "dev-cuda"
-          tag: "<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
-          platform: "linux/amd64"
-          build-args: "BASE_IMAGE=nvidia/cuda:<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>"
-      - run:
-          name: "Test dev-cuda image"
-          command: |
-            docker buildx build \
-              --platform linux/amd64 \
-              --output type=cacheonly \
-              --build-arg IMAGE=dev-cuda:<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >> \
-              --build-context test_root=images/dev-cuda/tests \
-              ./utils/test
+      - checkout
+      - build-and-test:
+          name-space: $DOCKER_USER
+          image-name: dev-cuda
+          extra_build_args: |
+            --platform=linux/amd64
+            --build-arg=BASE_IMAGE=nvidia/cuda:<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>
+          extra_test_args: |
+            --platform=linux/amd64
 
 workflows:
   test:
     jobs:
-      - test-dev-cuda-build:
+      - test-dev-cuda:
           matrix:
             parameters:
               os:
