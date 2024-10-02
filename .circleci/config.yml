@@ -42,6 +42,7 @@ commands:
           step-name: "Build test image"
           image: test-<< parameters.image-name >>
           path: ./utils/test
+          docker-context: ./utils/test
           use-buildkit: << parameters.use-buildkit >>
           extra_build_args: |
             --output=type=cacheonly
