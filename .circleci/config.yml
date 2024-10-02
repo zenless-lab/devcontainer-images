@@ -25,11 +25,16 @@ commands:
         description: "The extra test arguments to pass to the Docker image"
         type: string
         default: ""
+      image-root:
+        description: "The root directory of the Docker image"
+        type: string
+        default: "images"
     steps:
       - docker/build:
           step-name: "Build image"
           image: << parameters.name-space >>/<< parameters.image-name >>
-          path: images/<< parameters.image-name >>/src
+          path: << parameters.image-root >>/<< parameters.image-name >>/src
+          docker-context: << parameters.image-root >>/<< parameters.image-name >>/src
           use-buildkit: << parameters.use-buildkit >>
           tag: cache-$CIRCLE_SHA1
           extra_build_args: << parameters.extra_build_args >>
@@ -41,7 +46,7 @@ commands:
           extra_build_args: |
             --output=type=cacheonly
             --build-arg=IMAGE=<< parameters.name-space >>/<< parameters.image-name >>:cache-$CIRCLE_SHA1
-            --build-context=test_root=images/<< parameters.image-name >>/tests
+            --build-context=test_root=<< parameters.image-root >>/<< parameters.image-name >>/tests
             << parameters.extra_test_args >>
 
 jobs:
