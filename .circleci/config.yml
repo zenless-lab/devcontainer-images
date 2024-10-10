@@ -83,6 +83,30 @@ workflows:
               os:
                 - ubuntu22.04
                 - ubuntu20.04
-    # - deploy:
-    #     requires:
-    #       - test-python
+  deploy:
+    jobs:
+      - hold:
+          name: "Hold for approval"
+          type: approval
+          requires:
+            - image-dev-cuda
+      - docker/publish:
+          matrix:
+            parameters:
+              cuda_version:
+                - "12.4.1"
+              os:
+                - "ubuntu22.04"
+                - "ubuntu20.04"
+          name: "Publish image: dev-cuda"
+          requires:
+            - hold
+          image: $DOCKER_USER/dev-cuda
+          path: images/dev-cuda/src
+          docker-context: images/dev-cuda/src
+          use-buildkit: true
+          tag: << parameters.cuda_version >>-<< parameters.os >>
+          extra_build_args: |
+            --build-arg=BASE_IMAGE=nvidia/cuda:<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>
+          docker-password: $DOCKER_TOKEN
+          docker-username: $DOCKER_USER
