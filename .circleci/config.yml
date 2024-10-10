@@ -132,9 +132,9 @@ workflows:
           requires:
             - image-dev-cuda
       - image-dev-cuda:
+          push: true
           matrix:
             parameters:
               os:
                 - ubuntu22.04
                 - ubuntu20.04
-              push: true
