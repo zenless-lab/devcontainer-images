@@ -127,7 +127,6 @@ workflows:
   deploy:
     jobs:
       - hold:
-          name: "Hold for approval"
           type: approval
           requires:
             - image-dev-cuda
