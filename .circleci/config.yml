@@ -133,6 +133,8 @@ workflows:
             - image-dev-cuda
       - image-dev-cuda:
           push: true
+          requires:
+            - hold
           matrix:
             parameters:
               os:
