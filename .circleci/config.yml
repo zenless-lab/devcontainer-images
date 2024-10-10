@@ -50,32 +50,6 @@ commands:
             --build-context=test_root=<< parameters.image-root >>/<< parameters.image-name >>/tests
             << parameters.extra_test_args >>
 
-  login-and-push:
-    description: "Renames and pushes a Docker image"
-    parameters:
-      docker-username:
-        description: "The username to use when logging into Docker Hub"
-        type: string
-      docker-password:
-        description: "The password to use when logging into Docker Hub"
-        type: string
-      image-name:
-        description: "The name of the Docker image to push"
-        type: string
-        default: ""
-      tag:
-        description: "The tag of the Docker image to push"
-        type: string
-        default: ""
-    steps:
-      - run:
-          name: "Login to Docker Hub"
-          command: |
-            echo "<< parameters.docker-password >>" | docker login --username "<< parameters.docker-username >>" --password-stdin
-      - docker/push:
-          image: << parameters.image-name >>
-          tag: << parameters.tag >>
-
 jobs:
   image-dev-cuda:
     docker:
@@ -109,12 +83,12 @@ jobs:
                 name: "Rename image"
                 command: |
                   docker tag org/dev-cuda:cache-$CIRCLE_SHA1 $DOCKER_USER/dev-cuda:<< parameters.cuda_version >>-<< parameters.os >>
-            - login-and-push:
+            - docker/check:
                 docker-username: $DOCKER_USER
-                docker-password: $DOCKER_PASS
+                docker-password: $DOCKER_TOKEN
+            - docker/push:
                 image-name: $DOCKER_USER/dev-cuda
                 tag: << parameters.cuda_version >>-<< parameters.os >>
-
 workflows:
   test:
     jobs:
