@@ -84,11 +84,12 @@ jobs:
                 command: |
                   docker tag org/dev-cuda:cache-$CIRCLE_SHA1 $DOCKER_USER/dev-cuda:<< parameters.cuda_version >>-<< parameters.os >>
             - docker/check:
-                docker-username: $DOCKER_USER
-                docker-password: $DOCKER_TOKEN
+                docker-username: DOCKER_USER
+                docker-password: DOCKER_TOKEN
             - docker/push:
                 image-name: $DOCKER_USER/dev-cuda
                 tag: << parameters.cuda_version >>-<< parameters.os >>
+
 workflows:
   test:
     jobs:
