@@ -129,6 +129,7 @@ workflows:
       - hold:
           type: approval
       - image-dev-cuda:
+          context: "Docker Hub"
           push: true
           requires:
             - hold
