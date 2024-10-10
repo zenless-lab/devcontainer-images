@@ -50,8 +50,34 @@ commands:
             --build-context=test_root=<< parameters.image-root >>/<< parameters.image-name >>/tests
             << parameters.extra_test_args >>
 
+  login-and-push:
+    description: "Renames and pushes a Docker image"
+    parameters:
+      docker-username:
+        description: "The username to use when logging into Docker Hub"
+        type: string
+      docker-password:
+        description: "The password to use when logging into Docker Hub"
+        type: string
+      image-name:
+        description: "The name of the Docker image to push"
+        type: string
+        default: ""
+      tag:
+        description: "The tag of the Docker image to push"
+        type: string
+        default: ""
+    steps:
+      - run:
+          name: "Login to Docker Hub"
+          command: |
+            echo "<< parameters.docker-password >>" | docker login --username "<< parameters.docker-username >>" --password-stdin
+      - docker/push:
+          image: << parameters.image-name >>
+          tag: << parameters.tag >>
+
 jobs:
-  test-dev-cuda:
+  image-dev-cuda:
     docker:
       - image: cimg/python:3.11
     parameters:
@@ -61,6 +87,9 @@ jobs:
       os:
         type: string
         default: "ubuntu22.04"
+      push:
+        type: boolean
+        default: false
     steps:
       - setup_remote_docker:
           docker_layer_caching: false
@@ -73,11 +102,23 @@ jobs:
             --build-arg=BASE_IMAGE=nvidia/cuda:<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>
           extra_test_args: |
             --platform=linux/amd64
+      - when:
+          condition: << parameters.push >>
+          steps:
+            - run:
+                name: "Rename image"
+                command: |
+                  docker tag org/dev-cuda:cache-$CIRCLE_SHA1 $DOCKER_USER/dev-cuda:<< parameters.cuda_version >>-<< parameters.os >>
+            - login-and-push:
+                docker-username: $DOCKER_USER
+                docker-password: $DOCKER_PASS
+                image-name: $DOCKER_USER/dev-cuda
+                tag: << parameters.cuda_version >>-<< parameters.os >>
 
 workflows:
   test:
     jobs:
-      - test-dev-cuda:
+      - image-dev-cuda:
           matrix:
             parameters:
               os:
@@ -90,23 +131,10 @@ workflows:
           type: approval
           requires:
             - image-dev-cuda
-      - docker/publish:
+      - image-dev-cuda:
           matrix:
             parameters:
-              cuda_version:
-                - "12.4.1"
               os:
-                - "ubuntu22.04"
-                - "ubuntu20.04"
-          name: "Publish image: dev-cuda"
-          requires:
-            - hold
-          image: $DOCKER_USER/dev-cuda
-          path: images/dev-cuda/src
-          docker-context: images/dev-cuda/src
-          use-buildkit: true
-          tag: << parameters.cuda_version >>-<< parameters.os >>
-          extra_build_args: |
-            --build-arg=BASE_IMAGE=nvidia/cuda:<< parameters.cuda_version >>-cudnn-devel-<< parameters.os >>
-          docker-password: $DOCKER_TOKEN
-          docker-username: $DOCKER_USER
+                - ubuntu22.04
+                - ubuntu20.04
+              push: true
