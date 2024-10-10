@@ -128,8 +128,6 @@ workflows:
     jobs:
       - hold:
           type: approval
-          requires:
-            - image-dev-cuda
       - image-dev-cuda:
           push: true
           requires:
