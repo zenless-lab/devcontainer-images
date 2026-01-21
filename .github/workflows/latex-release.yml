@@ -64,7 +64,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=workflow_dispatch
+            type=sha
             type=semver,pattern={{version}}
             type=raw,value=${{ matrix.os.name }}-${{ matrix.scheme }}
             type=raw,value=latest,enable=${{ matrix.os.name == 'ubuntu' && matrix.scheme == 'full' }}
