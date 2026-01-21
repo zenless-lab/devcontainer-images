@@ -13,16 +13,18 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         xz-utils \
         tar
 
-ARG INSTALL_SCRIPT_URL="https://tug.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz"
+ARG CTAN_URL="https://tug.ctan.org"
+ARG INSTALL_SCRIPT_URL="/systems/texlive/tlnet/install-tl-unx.tar.gz"
 RUN --mount=type=cache,target=/tmp/texlive,sharing=locked \
     update-ca-certificates \
-    && curl -LfsS --retry 3 -o /tmp/texlive/install-tl-unx.tar.gz ${INSTALL_SCRIPT_URL} \
+    && curl -LfsS --retry 3 -o /tmp/texlive/install-tl-unx.tar.gz ${CTAN_URL}${INSTALL_SCRIPT_URL} \
     && zcat < /tmp/texlive/install-tl-unx.tar.gz | tar -xvf - -C /tmp/texlive --strip-components=1
 
 ARG SCHEME=full
 ARG PAPER=a4
 RUN --mount=type=cache,target=/tmp/texlive,sharing=locked \
     /tmp/texlive/install-tl \
+        --location ${CTAN_URL} \
         --no-interaction \
         --scheme ${SCHEME} \
         --paper ${PAPER}
