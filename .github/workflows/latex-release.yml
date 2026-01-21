@@ -66,7 +66,7 @@ jobs:
           tags: |
             type=ref,event=workflow_dispatch
             type=semver,pattern={{version}}
-            type=raw,value=${{ matrix.os.name }}-{{ matrix.scheme }}
+            type=raw,value=${{ matrix.os.name }}-${{ matrix.scheme }}
             type=raw,value=latest,if=matrix.os.name == 'ubuntu' && matrix.scheme == 'full'
             type=raw,value=ubuntu,if=matrix.os.name == 'ubuntu' && matrix.scheme == 'full'
             type=raw,value=debian,if=matrix.os.name == 'debian' && matrix.scheme == 'full'
