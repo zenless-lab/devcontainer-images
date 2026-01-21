@@ -9,11 +9,11 @@ on:
       - main
     paths:
       - 'src/latex/**'
-      - '.github/workflows/latex-image.yml'
+      - '.github/workflows/latex-test.yml'
   pull_request:
     paths:
       - 'src/latex/**'
-      - '.github/workflows/latex-image.yml'
+      - '.github/workflows/latex-test.yml'
 
 jobs:
   test:
