@@ -22,9 +22,13 @@ ARG PAPER=a4
 RUN --mount=type=cache,target=/tmp/texlive,sharing=locked \
     --mount=from=downloader,source=/install-tl-unx.tar.gz,target=/tmp/texlive/install-tl-unx.tar.gz,readonly \
     zcat < /tmp/texlive/install-tl-unx.tar.gz | tar -xvf - -C /tmp/texlive --strip-components=1 \
-    && /tmp/texlive/install-tl \
-        --no-interaction \
-        --scheme ${SCHEME} \
-        --paper ${PAPER}
+    && for attempt in 1 2 3; do \
+        echo "Attempt $attempt to install TeX Live" \
+        && /tmp/texlive/install-tl \
+            --no-interaction \
+            --scheme ${SCHEME} \
+            --paper ${PAPER} \
+        && break || echo "Installation failed, retrying..." ; \
+    done
 
 RUN ln -s /usr/local/texlive/$(ls /usr/local/texlive | grep '20[0-9][0-9]')/bin/*/* /usr/local/bin/
