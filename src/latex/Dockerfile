@@ -1,5 +1,9 @@
 ARG BASE_IMAGE=mcr.microsoft.com/devcontainers/base:ubuntu
-FROM ${BASE_IMAGE}
+FROM busybox:stable AS downloader
+ARG INSTALL_SCRIPT_URL="https://tug.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz"
+ADD ${INSTALL_SCRIPT_URL} /install-tl-unx.tar.gz
+
+FROM ${BASE_IMAGE} AS final
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
@@ -13,20 +17,18 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         xz-utils \
         tar
 
-ARG INSTALL_SCRIPT_LOCATION="https://tug.ctan.org/systems/texlive/tlnet"
-ARG INSTALL_SCRIPT_NAME="/install-tl-unx.tar.gz"
-RUN --mount=type=cache,target=/tmp/texlive,sharing=locked \
-    update-ca-certificates \
-    && curl -LfsS --retry 3 -o /tmp/texlive/install-tl-unx.tar.gz ${INSTALL_SCRIPT_LOCATION}${INSTALL_SCRIPT_NAME} \
-    && zcat < /tmp/texlive/install-tl-unx.tar.gz | tar -xvf - -C /tmp/texlive --strip-components=1
-
 ARG SCHEME=full
 ARG PAPER=a4
 RUN --mount=type=cache,target=/tmp/texlive,sharing=locked \
-    /tmp/texlive/install-tl \
-        --location ${INSTALL_SCRIPT_LOCATION} \
-        --no-interaction \
-        --scheme ${SCHEME} \
-        --paper ${PAPER}
+    --mount=from=downloader,source=/install-tl-unx.tar.gz,target=/tmp/texlive/install-tl-unx.tar.gz,readonly \
+    zcat < /tmp/texlive/install-tl-unx.tar.gz | tar -xvf - -C /tmp/texlive --strip-components=1 \
+    && for attempt in 1 2 3; do \
+        echo "Attempt $attempt to install TeX Live" \
+        && /tmp/texlive/install-tl \
+            --no-interaction \
+            --scheme ${SCHEME} \
+            --paper ${PAPER} \
+        && break || echo "Installation failed, retrying..." ; \
+    done
 
 RUN ln -s /usr/local/texlive/$(ls /usr/local/texlive | grep '20[0-9][0-9]')/bin/*/* /usr/local/bin/
