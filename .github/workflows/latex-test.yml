@@ -1,0 +1,59 @@
+name: Test LaTeX Image
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/latex/**'
+      - '.github/workflows/latex-test.yml'
+  pull_request:
+    paths:
+      - 'src/latex/**'
+      - '.github/workflows/latex-test.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - name: ubuntu
+            base_image: mcr.microsoft.com/devcontainers/base:ubuntu
+          - name: debian
+            base_image: mcr.microsoft.com/devcontainers/base:debian
+        scheme: [small, basic]
+        paper: [a4, letter]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Set up BuildKit Docker container builder to be able to build
+      # multi-platform images and export cache
+      # https://github.com/docker/setup-buildx-action
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image for testing
+        uses: docker/build-push-action@v6
+        with:
+          context: ./src/latex
+          file: ./src/latex/Dockerfile
+          push: false
+          load: true
+          tags: test-image:latest
+          build-args: |
+            BASE_IMAGE=${{ matrix.os.base_image }}
+            SCHEME=${{ matrix.scheme }}
+            PAPER=${{ matrix.paper }}
+
+      - name: Test image
+        run: |
+          docker run --rm test-image:latest tex --version
+          docker run --rm test-image:latest latex --version
+          docker run --rm test-image:latest pdflatex --version

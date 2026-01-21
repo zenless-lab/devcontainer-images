@@ -1,0 +1,30 @@
+ARG BASE_IMAGE=mcr.microsoft.com/devcontainers/base:ubuntu
+FROM ${BASE_IMAGE}
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    export DEBIAN_FRONTEND=noninteractive \
+    && apt-get update \
+    && apt-get -y install --no-install-recommends \
+        curl \
+        ca-certificates \
+        perl \
+        gzip \
+        xz-utils \
+        tar
+
+ARG INSTALL_SCRIPT_URL="https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz"
+RUN --mount=type=cache,target=/tmp/texlive,sharing=locked \
+    update-ca-certificates \
+    && curl -L -o /tmp/texlive/install-tl-unx.tar.gz ${INSTALL_SCRIPT_URL} \
+    && zcat < /tmp/texlive/install-tl-unx.tar.gz | tar -xvf - -C /tmp/texlive --strip-components=1
+
+ARG SCHEME=full
+ARG PAPER=a4
+RUN --mount=type=cache,target=/tmp/texlive,sharing=locked \
+    /tmp/texlive/install-tl \
+        --no-interaction \
+        --scheme ${SCHEME} \
+        --paper ${PAPER}
+
+RUN ln -s /usr/local/texlive/$(ls /usr/local/texlive | grep '20[0-9][0-9]')/bin/*/* /usr/local/bin/
