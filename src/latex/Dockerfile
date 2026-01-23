@@ -26,7 +26,7 @@ RUN --mount=type=cache,target=/tmp/texlive,sharing=locked \
     fi && \
     for attempt in 1 2 3; do \
         echo "Attempt $attempt to install TeX Live" && \
-        ${install_script} \
+        "${install_script}" \
             --no-interaction \
             --scheme ${SCHEME} \
             --paper ${PAPER} && \
