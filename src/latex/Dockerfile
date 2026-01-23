@@ -1,6 +1,4 @@
 ARG BASE_IMAGE=mcr.microsoft.com/devcontainers/base:ubuntu
-FROM busybox:stable AS downloader
-
 FROM ${BASE_IMAGE} AS final
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
