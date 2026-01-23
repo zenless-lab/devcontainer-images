@@ -5,8 +5,8 @@ FROM ${BASE_IMAGE} AS final
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
-    DEBIAN_FRONTEND=noninteractive \
     apt-get -y install --no-install-recommends \
         curl \
         ca-certificates \
