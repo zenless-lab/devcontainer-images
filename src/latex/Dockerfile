@@ -20,6 +20,10 @@ ARG PAPER=a4
 RUN --mount=type=cache,target=/tmp/texlive,sharing=locked \
     --mount=from=ryanminato/tex-live-src:latest,source=/,target=/tmp/texlive,readonly \
     install_script=$(ls -d /tmp/texlive/*/install-tl | head -n 1) && \
+    if [ -z "$install_script" ] || [ ! -x "$install_script" ]; then \
+        echo "TeX Live install script not found or not executable at '$install_script'"; \
+        exit 1; \
+    fi && \
     for attempt in 1 2 3; do \
         echo "Attempt $attempt to install TeX Live" && \
         ${install_script} \
